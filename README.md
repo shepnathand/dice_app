@@ -1,4 +1,5 @@
 # 2dice
+A Python 3 script that converts a png image into a black and white image made of dice.
 
 ## synopsis
 python 2dice.py [FILE]...
