@@ -65,10 +65,6 @@ def convert_dice(image):
 			pixel = image.getpixel((i,j))
 			saturation += pixel[2]
 
-			for k in range(7):
-				for l in range(7):
-					pixels[(i*7)+l, (j*7)+k] = (255,255,255)
-
 			# Transform to dice
 			if saturation > maxSaturation*(5/6):
 				pixels[(i*7)+3, (j*7)+3] = (0,0,0)
