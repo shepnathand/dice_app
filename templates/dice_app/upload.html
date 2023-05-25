@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% load static %}
+    <title>Dice Image Generator</title>
+    <link rel="stylesheet" href="{% static 'dice_app/style.css' %}">
+</head>
+<body>
+    <h1>Dice Image Generator</h1>
+    <form id="dice-form" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="image-upload">Upload an image:</label>
+        <input type="file" name="image-upload" id="image-upload" accept="image/*"><br><br>
+        <label for="dice-size">Select a dice size:</label>
+        <select name="dice-size" id="dice-size">
+            <option value="20">20x20</option>
+            <option value="30">30x30</option>
+            <option value="40">40x40</option>
+        </select><br><br>
+        <input type="submit" value="Generate">
+    </form>
+
+    <div id="dice-image"></div>
+    <div id="dice-instructions"></div>
+
+    <script>
+        const form = document.querySelector('#dice-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            // console.log([...formData]);  // Debug output
+
+            const response = await fetch('/generate_dice_image/', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Display the dice-based image
+                const diceImage = document.createElement('img');
+                diceImage.src = data.imagePath;
+                document.querySelector('#dice-image').appendChild(diceImage);
+
+                // Display the CSV file
+                const diceInstructions = document.createElement('a');
+                diceInstructions.href = data.instructionsPath;
+                diceInstructions.download = 'dice_instructions.csv';
+                diceInstructions.innerHTML = 'Download CSV file';
+                document.querySelector('#dice-instructions').appendChild(diceInstructions);
+            } else {
+                alert('Error generating dice image.');
+            }
+        });
+    </script>
+
+    <div id="form-errors" style="color: red;"></div>
+    <script>
+        const formErrorsDiv = document.querySelector('#form-errors');
+        const urlSearchParams = new URLSearchParams(window.location.search);
+        const params = Object.fromEntries(urlSearchParams.entries());
+
+        if (Object.keys(params).length > 0) {
+            formErrorsDiv.innerHTML = 'Form errors: <br>';
+            for (const key in params) {
+                formErrorsDiv.innerHTML += `<b>${key}</b>: ${params[key]} <br>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
