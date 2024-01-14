@@ -4,21 +4,31 @@
     {% load static %}
     <title>Dice Image Generator</title>
     <link rel="stylesheet" href="{% static 'dice_app/style.css' %}">
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 </head>
 <body>
-    <h1>Dice Image Generator</h1>
+    <br><br>
     <form id="dice-form" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <label for="image-upload">Upload an image:</label>
         <input type="file" name="image-upload" id="image-upload" accept="image/*"><br><br>
-        <label for="dice-size">Select a dice size:</label>
-        <select name="dice-size" id="dice-size">
-            <option value="20">20x20</option>
-            <option value="30">30x30</option>
-            <option value="40">40x40</option>
-        </select><br><br>
         <input type="submit" value="Generate">
     </form>
+
+    <ul id="messages">
+        {% if messages %}
+            {% for message in messages %}
+            <li {% if message.tags %}class="{{ message.tags }}"{% endif %}>
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error: {% endif %}
+                {% if message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
+                    <img src="data:image/png;base64, {{message }}" alt="dice image" />
+                {% else %}
+                    {{ message }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        {% endif %}
+    </ul>
 
     <div id="dice-image"></div>
     <div id="dice-instructions"></div>
@@ -26,23 +36,28 @@
     <script>
         const form = document.querySelector('#dice-form');
         form.addEventListener('submit', async (event) => {
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('dice-image').innerHTML = '';
+            document.getElementById('dice-instructions').innerHTML = '';
             event.preventDefault();
 
             const formData = new FormData(form);
             // console.log([...formData]);  // Debug output
 
-            const response = await fetch('/generate_dice_image/', {
+            const response = await fetch('/generate_dice_image', {
                 method: 'POST',
                 body: formData
             });
 
             if (response.ok) {
+
                 const data = await response.json();
 
                 // Display the dice-based image
                 const diceImage = document.createElement('img');
                 diceImage.src = data.imagePath;
                 document.querySelector('#dice-image').appendChild(diceImage);
+
 
                 // Display the CSV file
                 const diceInstructions = document.createElement('a');
@@ -51,7 +66,7 @@
                 diceInstructions.innerHTML = 'Download CSV file';
                 document.querySelector('#dice-instructions').appendChild(diceInstructions);
             } else {
-                alert('Error generating dice image.');
+                location.reload();
             }
         });
     </script>

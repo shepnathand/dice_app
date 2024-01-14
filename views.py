@@ -5,6 +5,7 @@ import os
 import csv
 from PIL import Image
 from django.http import JsonResponse
+from django.contrib import messages
 from dice_app.forms import DiceForm
 from dice_app.dice_image import DiceImage
 from django.views.decorators.csrf import csrf_protect
@@ -32,12 +33,12 @@ def generate_dice_image(request):
         # Get the uploaded image file and dice size from the form
         image_file = request.FILES['image-upload']
         # print('Cleaned image file:', image_file)
-        dice_size = request.POST['dice-size']
+        #dice_size = request.POST['dice-size']
         # print('cleaned dice size:',dice_size)
 
         # Generate the dice-based image and CSV file using the DiceImage class
-        dice_size = request.POST.get('dice-size')
-        dice_image = DiceImage(image_file=image_file, dice_size=dice_size)
+        #dice_size = request.POST.get('dice-size')
+        dice_image = DiceImage(image_file=image_file)
         dice_image.generate_dice_image()
 
         # Get the paths to the generated files
@@ -53,9 +54,10 @@ def generate_dice_image(request):
             # Print the field name and the associated error message(s)
             print(f"Field: {field}")
             for error in error_list:
+                messages.error(request, error)
                 print(f"Error: {error}")
         
-        return HttpResponseBadRequest('Invalid form data')
+        return HttpResponseBadRequest(error_list[0])
     
     # Debug output to check if the view is being accessed
     print('Invalid form or request method is not POST')
