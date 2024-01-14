@@ -1,27 +1,55 @@
 import os
 import csv
-from PIL import Image
+from PIL import Image,ImageOps
 import tempfile
 import uuid
 from django.conf import settings
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
 import numpy as np
 import cv2
 
 class DiceImage:
-    def __init__(self, image_file, dice_size):
+    def __init__(self, image_file):
         self.image_file = image_file
-        self.dice_size = dice_size
         self.image_filename = None
         self.csv_filename = None
 
     def generate_dice_image(self):
         size_modifier = 5 # 1, 2, 4, 5, 10, or 20 only
-        dice_size = self.dice_size
+        dice_size = 20
 
         # Convert the uploaded image file to a PIL Image object
         image = Image.open(self.image_file)
+        image = ImageOps.exif_transpose(image)
 
         # get size
+        width, height = image.size
+
+        # # resize image
+        # left = 0
+        # right = width
+        # top = 0
+        # bottom = height
+
+        # if width%20 != 0:
+        #     if (width%20)%2 == 0:
+        #         left = (width%20)/2
+        #         right = width - left
+        #     else:
+        #         left = math.floor((width%20)/2)
+        #         right = width - math.ceil((width%20)/2)
+
+        # if height%20 != 0:
+        #     if (height%20)%2 == 0:
+        #         top = (height%20)/2
+        #         bottom = height - top
+        #     else:
+        #         top = math.floor((height%20)/2)
+        #         bottom = height - math.ceil((height%20)/2)
+
+        # image = image.crop((left, top, right, bottom))
+
         width, height = image.size
 
         # Create new Image and a Pixel Map
@@ -61,16 +89,17 @@ class DiceImage:
         i = 0
         j = 0
         maxSaturation = 0
-        count = 0
 
-        while i < height/size_modifier:
-            while j < width/size_modifier:
-                pixel = image.getpixel((i,j))
+        w,h = image.size
+
+        while i < h:
+            while j < w:
+                pixel = image.getpixel((j,i))
                 if pixel[2] > maxSaturation:
                     maxSaturation = pixel[2]
-                count += 1
                 j+=1
             i+=1
+            j=0
 
         i = 0
 
