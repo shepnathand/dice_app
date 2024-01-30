@@ -21,7 +21,6 @@
             <li {% if message.tags %}class="{{ message.tags }}"{% endif %}>
                 {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error: {% endif %}
                 {% if message.level == DEFAULT_MESSAGE_LEVELS.INFO %}
-                    <img src="data:image/png;base64, {{message }}" alt="dice image" />
                 {% else %}
                     {{ message }}
                 {% endif %}
@@ -30,7 +29,7 @@
         {% endif %}
     </ul>
 
-    <div id="dice-image"></div>
+    <div id="dice-image" src="{{ dice_image }}"></div>
     <div id="dice-instructions"></div>
 
     <script>
@@ -55,16 +54,31 @@
 
                 // Display the dice-based image
                 const diceImage = document.createElement('img');
-                diceImage.src = data.imagePath;
+                // diceImage.src = data.imagePath;
+                diceImage.src = "data:image/jpeg;base64," + data.image.split("'")[1];
                 document.querySelector('#dice-image').appendChild(diceImage);
 
 
                 // Display the CSV file
                 const diceInstructions = document.createElement('a');
-                diceInstructions.href = data.instructionsPath;
+                let instructions = data.instructions;
+                instructions = instructions.replace('[[', '');
+                instructions = instructions.replace(']]', '');
+                instructions = instructions.split("], [");
+
+                // Convert array elements to CSV format
+                const csvContent = instructions.map(item => item.split(',').map(value => value.trim()).join(',')).join('\n');
+
+                // Create a Blob from the CSV content
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+
+                // Create a link element
+                const link = document.createElement('a');
+                diceInstructions.href = URL.createObjectURL(blob);
                 diceInstructions.download = 'dice_instructions.csv';
-                diceInstructions.innerHTML = 'Download CSV file';
+                diceInstructions.innerHTML = 'Download instructions.'
                 document.querySelector('#dice-instructions').appendChild(diceInstructions);
+
             } else {
                 location.reload();
             }

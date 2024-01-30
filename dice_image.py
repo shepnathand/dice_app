@@ -1,4 +1,5 @@
 import os
+import io
 import csv
 from PIL import Image,ImageOps
 import tempfile
@@ -8,15 +9,17 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 import numpy as np
 import cv2
+import base64
 
 class DiceImage:
     def __init__(self, image_file):
         self.image_file = image_file
         self.image_filename = None
         self.csv_filename = None
+        self.csv_data = []
 
     def generate_dice_image(self):
-        size_modifier = 5 # 1, 2, 4, 5, 10, or 20 only
+        size_modifier = 5
         dice_size = 20
 
         # Convert the uploaded image file to a PIL Image object
@@ -24,32 +27,6 @@ class DiceImage:
         image = ImageOps.exif_transpose(image)
 
         # get size
-        width, height = image.size
-
-        # # resize image
-        # left = 0
-        # right = width
-        # top = 0
-        # bottom = height
-
-        # if width%20 != 0:
-        #     if (width%20)%2 == 0:
-        #         left = (width%20)/2
-        #         right = width - left
-        #     else:
-        #         left = math.floor((width%20)/2)
-        #         right = width - math.ceil((width%20)/2)
-
-        # if height%20 != 0:
-        #     if (height%20)%2 == 0:
-        #         top = (height%20)/2
-        #         bottom = height - top
-        #     else:
-        #         top = math.floor((height%20)/2)
-        #         bottom = height - math.ceil((height%20)/2)
-
-        # image = image.crop((left, top, right, bottom))
-
         width, height = image.size
 
         # Create new Image and a Pixel Map
@@ -102,8 +79,6 @@ class DiceImage:
             j=0
 
         i = 0
-
-        csv_data = []
 
         # Load the dice images
         dice_images = []
@@ -166,29 +141,16 @@ class DiceImage:
 
                 i+=(dice_size//size_modifier)
 
-            csv_data.append(csv_row)
+            self.csv_data.append(csv_row)
 
             i=0
             j+=(dice_size//size_modifier)
 
-        # Save the generated dice-based image
-        self.image_filename = f'dice_image_{uuid.uuid4()}.png'
-        self.image_path = os.path.join(settings.MEDIA_ROOT, self.image_filename)
-        new.save(self.image_path)
+        # Return the generated dice-based image
+        img_byte_array = io.BytesIO()
+        new.save(img_byte_array, format='JPEG', subsampling=0, quality=100)
+        img_byte_array = str(base64.b64encode(img_byte_array.getvalue()))
+        return img_byte_array
 
-        # Generate the CSV file with the dice values
-        self.csv_filename = f'dice_image_{uuid.uuid4()}.csv'
-        self.csv_path = os.path.join(settings.MEDIA_ROOT, self.csv_filename)
-        with open(self.csv_path, 'w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(csv_data)
-
-    def get_image_filename(self):
-        if self.image_filename is None:
-            self.image_filename = f'dice_image_{uuid.uuid4()}.png'
-        return self.image_filename
-
-    def get_csv_filename(self):
-        if self.csv_filename is None:
-            self.csv_filename = f'dice_image_{uuid.uuid4()}.csv'
-        return self.csv_filename
+    def get_csv_data(self):
+        return str(self.csv_data)

@@ -39,14 +39,13 @@ def generate_dice_image(request):
         # Generate the dice-based image and CSV file using the DiceImage class
         #dice_size = request.POST.get('dice-size')
         dice_image = DiceImage(image_file=image_file)
-        dice_image.generate_dice_image()
+        image = dice_image.generate_dice_image()
 
         # Get the paths to the generated files
-        image_path = os.path.join(settings.MEDIA_URL, dice_image.get_image_filename())
-        instructions_path = os.path.join(settings.MEDIA_URL, dice_image.get_csv_filename())
+        csv_data = dice_image.get_csv_data()
 
         # Return the paths to the generated files as a JSON object
-        return JsonResponse({'imagePath': image_path, 'instructionsPath': instructions_path})
+        return JsonResponse({'image': image, 'instructions': csv_data})
     else:
         # Form is invalid, handle the errors
         errors = form.errors.as_data()
